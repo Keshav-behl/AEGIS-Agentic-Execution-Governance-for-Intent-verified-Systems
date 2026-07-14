@@ -67,3 +67,12 @@ AEGIS_API_KEYS: dict[str, str] = json.loads(os.getenv("AEGIS_API_KEYS", "{}"))
 # (delete/bulk/compliance/general). Falls back to SLACK_APPROVAL_CHANNEL for any
 # category with no entry, e.g. {"compliance": "#aegis-compliance"}.
 SLACK_ROUTING_CHANNELS: dict[str, str] = json.loads(os.getenv("SLACK_ROUTING_CHANNELS", "{}"))
+
+# How long a pending approval can go without a decision before it's escalated.
+# Should be shorter than TOKEN_EXPIRY_SECONDS so the still-valid token has time
+# left to be actioned after escalation.
+APPROVAL_SLA_SECONDS = int(os.getenv("APPROVAL_SLA_SECONDS", "120"))
+
+# Optional: where to post the wider escalation notice. Defaults to the same
+# channel the original request was posted to (as a threaded reply there either way).
+SLACK_ESCALATION_CHANNEL = os.getenv("SLACK_ESCALATION_CHANNEL") or None

@@ -9,3 +9,4 @@ data/*.db-journal
 *.egg-info/
 .pytest_cache/
 .claude/settings.local.json
+.claude/scheduled_tasks.lock

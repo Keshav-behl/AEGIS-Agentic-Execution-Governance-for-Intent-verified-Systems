@@ -64,3 +64,22 @@ def post_approval_request(
         text=f"AEGIS approval needed: {proposal.action_type} (risk {risk.risk_score}/100)",
         blocks=blocks,
     )
+
+
+def escalate_unresolved(channel: str, ts: str, category: str, age_seconds: float) -> None:
+    note = (
+        f":alarm_clock: *SLA exceeded* — this {category} approval has been waiting "
+        f"{age_seconds / 60:.1f} min with no decision. Still awaiting Approve/Deny above."
+    )
+    _client.chat_postMessage(channel=channel, thread_ts=ts, text=note)
+
+    escalation_channel = config.SLACK_ESCALATION_CHANNEL
+    if escalation_channel and escalation_channel != channel:
+        try:
+            permalink = _client.chat_getPermalink(channel=channel, message_ts=ts)["permalink"]
+        except Exception:
+            permalink = None
+        _client.chat_postMessage(
+            channel=escalation_channel,
+            text=note + (f"\n{permalink}" if permalink else ""),
+        )

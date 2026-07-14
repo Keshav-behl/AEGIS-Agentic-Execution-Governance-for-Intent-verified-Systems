@@ -79,17 +79,35 @@ point your Slack app's Interactivity & Shortcuts Request URL at `<tunnel-url>/sl
 
 ## Using AEGIS
 
-With the API running, submit a natural-language request:
+With the API running, submit a natural-language request (a known `X-AEGIS-API-Key` is
+required — see `AEGIS_API_KEYS` in `.env.example`):
 
 ```
 curl -X POST http://localhost:8000/aegis/request \
   -H "Content-Type: application/json" \
+  -H "X-AEGIS-API-Key: your-key-here" \
   -d '{"text": "add a comment on AG-1 saying deployment is complete"}'
 ```
 
 Low-risk requests execute immediately against Jira. High-risk requests are posted to Slack
 for human approval and return `pending_approval` — poll `GET /aegis/status/{request_id}` to
 see when a decision has been made.
+
+## Governance features
+
+- **Requester identity** — every request carries a known identity via `X-AEGIS-API-Key`
+  (`AEGIS_API_KEYS` maps keys to names/emails). The audit trail and Slack messages both show
+  who *requested* an action, separate from who *approved* it.
+- **Role-based routing** — approval requests route to a Slack channel by risk category
+  (`SLACK_ROUTING_CHANNELS`, e.g. compliance-flagged actions to a compliance channel),
+  falling back to `SLACK_APPROVAL_CHANNEL`.
+- **SLA escalation** — a background sweep (`APPROVAL_SLA_SECONDS`) flags any approval left
+  unanswered past the SLA: a threaded reply on the original Slack message, plus an optional
+  wider notice in `SLACK_ESCALATION_CHANNEL`. The original buttons stay live until the
+  signed token's own `TOKEN_EXPIRY_SECONDS` expiry.
+- **Reporting dashboard** — `GET /aegis/report` (JSON) and `GET /aegis/dashboard` (HTML)
+  turn the audit trail into aggregate stats: auto-executed vs. human-approved split, average
+  time to decision, denials/rejections/failures, and human-review volume by category.
 
 ### Chat UI (Streamlit)
 
