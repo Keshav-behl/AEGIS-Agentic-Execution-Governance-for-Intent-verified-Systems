@@ -81,6 +81,9 @@ def transition_issue(issue_key: str, transition_name: str) -> None:
 
 
 def search_jql(jql: str, max_results: int = 20) -> list:
-    resp = _client.post("/rest/api/3/search/jql", json={"jql": jql, "maxResults": max_results})
+    resp = _client.post(
+        "/rest/api/3/search/jql",
+        json={"jql": jql, "maxResults": max_results, "fields": ["summary", "status", "issuetype"]},
+    )
     resp.raise_for_status()
     return resp.json()["issues"]

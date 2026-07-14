@@ -27,7 +27,12 @@ def _run_jira_action(proposal: ActionProposal) -> dict:
 
     if proposal.action_type == "search":
         issues = jira_client.search_jql(fields["jql"], fields.get("max_results", 20))
-        return {"issue_count": len(issues)}
+        return {
+            "issue_count": len(issues),
+            "issues": [
+                {"key": issue["key"], "summary": issue["fields"]["summary"]} for issue in issues
+            ],
+        }
 
     raise ValueError(f"Unsupported action_type: {proposal.action_type}")
 
