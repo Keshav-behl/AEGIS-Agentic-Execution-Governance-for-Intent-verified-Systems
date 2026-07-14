@@ -74,3 +74,27 @@ def test_status_of_unknown_request_id_is_pending():
 
     assert resp.status_code == 200
     assert resp.json()["status"] == "pending_approval"
+
+
+def test_report_reflects_a_real_auto_executed_request():
+    client.post(
+        "/aegis/request",
+        json={"text": "add a comment on AG-1 saying report endpoint test"},
+        headers=AUTH_HEADERS,
+    )
+
+    resp = client.get("/aegis/report")
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["total_actions"] == 1
+    assert body["auto_executed"] == 1
+
+
+def test_dashboard_renders_html():
+    resp = client.get("/aegis/dashboard")
+
+    assert resp.status_code == 200
+    assert "text/html" in resp.headers["content-type"]
+    assert "AEGIS" in resp.text
+    assert "Governance Dashboard" in resp.text

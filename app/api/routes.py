@@ -1,10 +1,14 @@
 from fastapi import APIRouter, Header, HTTPException
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from app.agent.intent_agent import propose_action
 from app.agent.risk_classifier import classify_risk
+from app.api.dashboard import render_dashboard
 from app.approval.slack_client import post_approval_request
 from app.audit.audit_log import find_by_nonce
+from app.audit.pending_requests import record_pending
+from app.audit.reporting import compute_stats
 from app.auth import identify_requester
 from app.protocol import signing
 from app.protocol.executor import execute
@@ -32,7 +36,8 @@ def create_request(body: AegisRequest, x_aegis_api_key: str = Header(...)):
         status = "auto_executed" if result["status"] == "success" else "auto_execution_failed"
         return {"status": status, "request_id": request_id, "detail": result}
 
-    post_approval_request(proposal, risk, token, requester=requester)
+    slack_resp = post_approval_request(proposal, risk, token, requester=requester)
+    record_pending(request_id, risk.category, slack_resp.get("channel"), slack_resp.get("ts"))
     return {
         "status": "pending_approval",
         "request_id": request_id,
@@ -60,3 +65,13 @@ def get_status(request_id: str):
         status = "failed"
 
     return {"status": status, "request_id": request_id, "detail": entry["payload"]}
+
+
+@router.get("/aegis/report")
+def get_report():
+    return compute_stats()
+
+
+@router.get("/aegis/dashboard", response_class=HTMLResponse)
+def get_dashboard():
+    return render_dashboard(compute_stats())
