@@ -1,6 +1,7 @@
 import httpx
 
 from app import config
+from app.llm.nvidia_client import chat as llm_chat
 
 _client = httpx.Client(
     base_url=config.JIRA_SITE_URL,
@@ -44,6 +45,11 @@ def add_comment(issue_key: str, body: str) -> None:
     resp.raise_for_status()
 
 
+def set_labels(issue_key: str, labels: list[str]) -> None:
+    resp = _client.put(f"/rest/api/3/issue/{issue_key}", json={"fields": {"labels": labels}})
+    resp.raise_for_status()
+
+
 def _find_transition(transitions: list, transition_name: str) -> dict | None:
     target = transition_name.lower()
 
@@ -64,12 +70,26 @@ def _find_transition(transitions: list, transition_name: str) -> dict | None:
     return None
 
 
+def _llm_resolve_transition(transitions: list, transition_name: str) -> dict | None:
+    options = [t["name"] for t in transitions]
+    prompt = (
+        f'A user wants to transition a Jira issue with the intent: "{transition_name}".\n'
+        f"The only available transitions are: {options}\n"
+        "Reply with ONLY the exact transition name from that list that best matches the "
+        "user's intent, or the single word NONE if none of them reasonably match. No other text."
+    )
+    reply = llm_chat([{"role": "user", "content": prompt}]).strip()
+    return next((t for t in transitions if t["name"] == reply), None)
+
+
 def transition_issue(issue_key: str, transition_name: str) -> None:
     resp = _client.get(f"/rest/api/3/issue/{issue_key}/transitions")
     resp.raise_for_status()
     transitions = resp.json()["transitions"]
 
     match = _find_transition(transitions, transition_name)
+    if match is None:
+        match = _llm_resolve_transition(transitions, transition_name)
     if match is None:
         available = [t["name"] for t in transitions]
         raise ValueError(
