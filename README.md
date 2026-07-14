@@ -109,6 +109,16 @@ see when a decision has been made.
   turn the audit trail into aggregate stats: auto-executed vs. human-approved split, average
   time to decision, denials/rejections/failures, and human-review volume by category.
 
+**Governance Dashboard** — live stats computed from the real audit trail:
+
+![AEGIS Governance Dashboard showing total actions, auto-executed vs human-approved split, success rate, SLA escalations, and category breakdown](docs/screenshots/governance-dashboard.png)
+
+**Requester identity, category, and SLA escalation in Slack** — the approval message shows
+who requested the action and its risk category, and an unresolved request gets a threaded
+SLA-escalation reply automatically:
+
+![Slack thread showing an AEGIS approval request with requester and category fields, and an automatic SLA escalation reply](docs/screenshots/slack-requester-category-sla.png)
+
 ### Chat UI (Streamlit)
 
 ```
