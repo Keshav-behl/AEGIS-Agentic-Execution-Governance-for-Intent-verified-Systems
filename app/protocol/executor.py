@@ -39,17 +39,20 @@ def _run_jira_action(proposal: ActionProposal) -> dict:
 
 def execute(token: str) -> dict:
     try:
-        nonce = signing.peek(token)["nonce"]
+        peeked = signing.peek(token)
+        nonce = peeked["nonce"]
+        requester = peeked["requester"]
     except signing.TokenError:
         nonce = None
+        requester = None
 
     try:
         proposal = signing.verify_token(token)
     except signing.TokenError as error:
-        append_entry({"token_error": str(error), "nonce": nonce}, "rejected")
+        append_entry({"token_error": str(error), "nonce": nonce, "requester": requester}, "rejected")
         return {"status": "rejected", "error": str(error)}
 
-    payload = {"action_proposal": proposal.model_dump(), "nonce": nonce}
+    payload = {"action_proposal": proposal.model_dump(), "nonce": nonce, "requester": requester}
 
     try:
         result = _run_jira_action(proposal)

@@ -1,3 +1,4 @@
+import json
 import os
 
 from dotenv import load_dotenv
@@ -57,3 +58,7 @@ RISK_APPROVAL_THRESHOLD = int(_vars["RISK_APPROVAL_THRESHOLD"])
 TOKEN_EXPIRY_SECONDS = int(_vars["TOKEN_EXPIRY_SECONDS"])
 
 DATABASE_PATH = _vars["DATABASE_PATH"]
+
+# Optional: map API keys to requester identities, e.g. {"nvapi-...": "alice@company.com"}.
+# Requests to /aegis/request must carry a known key in the X-AEGIS-API-Key header.
+AEGIS_API_KEYS: dict[str, str] = json.loads(os.getenv("AEGIS_API_KEYS", "{}"))

@@ -11,6 +11,7 @@ from app import config
 from app.jira import client as jira_client
 
 API_BASE_URL = "http://127.0.0.1:8000"
+API_KEY = next(iter(config.AEGIS_API_KEYS), "aegis-local-dev-key")
 
 
 def _print_header(title: str) -> None:
@@ -32,7 +33,12 @@ def _create_demo_ticket(compliance_labeled: bool) -> str:
 
 
 def _submit(text: str) -> dict:
-    resp = requests.post(f"{API_BASE_URL}/aegis/request", json={"text": text}, timeout=60)
+    resp = requests.post(
+        f"{API_BASE_URL}/aegis/request",
+        json={"text": text},
+        headers={"X-AEGIS-API-Key": API_KEY},
+        timeout=60,
+    )
     resp.raise_for_status()
     return resp.json()
 

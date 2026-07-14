@@ -35,10 +35,11 @@ def _sign(canonical: str) -> str:
     return hmac.new(config.AEGIS_SIGNING_SECRET.encode(), canonical.encode(), hashlib.sha256).hexdigest()
 
 
-def issue_token(action_proposal: ActionProposal, risk_score: int) -> str:
+def issue_token(action_proposal: ActionProposal, risk_score: int, requester: str | None = None) -> str:
     payload = {
         "action_proposal": action_proposal.model_dump(),
         "risk_score": risk_score,
+        "requester": requester,
         "nonce": secrets.token_hex(16),
         "expires_at": time.time() + config.TOKEN_EXPIRY_SECONDS,
     }
@@ -73,6 +74,7 @@ def peek(token: str) -> dict:
         "nonce": payload["nonce"],
         "action_proposal": ActionProposal.model_validate(payload["action_proposal"]),
         "risk_score": payload["risk_score"],
+        "requester": payload.get("requester"),
     }
 
 

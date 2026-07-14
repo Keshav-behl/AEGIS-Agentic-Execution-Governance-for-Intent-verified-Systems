@@ -18,9 +18,12 @@ def update_message(response_url: str, text: str, blocks: list) -> None:
     resp.raise_for_status()
 
 
-def post_approval_request(proposal: ActionProposal, risk: RiskAssessment, token: str) -> dict:
+def post_approval_request(
+    proposal: ActionProposal, risk: RiskAssessment, token: str, requester: str | None = None
+) -> dict:
     summary_lines = [
         "*AEGIS approval needed*",
+        f"*Requested by:* {requester or 'unknown (no API key)'}",
         f"*Action:* `{proposal.action_type}`" + (f" on `{proposal.target_issue}`" if proposal.target_issue else ""),
         f"*Risk score:* {risk.risk_score}/100" + (" _(forced by hard rule)_" if risk.forced else ""),
         f"*Rationale:* {risk.rationale}",

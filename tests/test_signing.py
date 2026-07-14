@@ -35,6 +35,18 @@ def test_valid_token_round_trips():
     assert verified.fields == proposal.fields
 
 
+def test_requester_round_trips_via_peek():
+    token = signing.issue_token(_sample_proposal(), risk_score=10, requester="alice@example.com")
+
+    assert signing.peek(token)["requester"] == "alice@example.com"
+
+
+def test_requester_defaults_to_none():
+    token = signing.issue_token(_sample_proposal(), risk_score=10)
+
+    assert signing.peek(token)["requester"] is None
+
+
 def test_tampered_signature_rejected():
     token = signing.issue_token(_sample_proposal(), risk_score=10)
     encoded_payload, signature = token.rsplit(".", 1)
