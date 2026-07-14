@@ -50,6 +50,18 @@ A trust-verified automation layer for Jira: a natural-language interface backed 
 
 Every signed token is single-use (nonce-checked) and time-limited, so a replayed or stale approval can never execute twice.
 
+## Screenshots
+
+**Chat UI** — a low-risk request executes instantly; a high-risk one (transitioning a
+compliance-labeled ticket) is held pending human approval in Slack:
+
+![AEGIS Streamlit chat UI showing an instant low-risk execution and a pending high-risk approval](docs/screenshots/streamlit-chat-ui.png)
+
+**Slack approval flow** — real approval requests with full risk rationale, one approved and
+one denied, each producing a single audit-logged outcome:
+
+![Slack #aegis channel showing AEGIS approval requests, one approved and one denied](docs/screenshots/slack-approval-flow.png)
+
 ## Required accounts
 
 See `.env.example` for the full list: an NVIDIA NIM API key (LLM inference), a Jira Cloud site + API token, and a Slack app with a bot token + signing secret. All have free tiers.
