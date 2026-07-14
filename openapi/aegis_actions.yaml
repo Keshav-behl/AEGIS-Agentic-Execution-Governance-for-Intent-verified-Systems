@@ -1,0 +1,85 @@
+openapi: 3.1.0
+info:
+  title: AEGIS Actions
+  description: >
+    Trust-verified automation layer for Jira. Submit a natural-language request;
+    AEGIS interprets it, risk-scores it, and either executes it immediately or
+    routes it to a human for approval in Slack before anything touches Jira.
+  version: "1.0.0"
+servers:
+  - url: https://unplowed-subplot-schilling.ngrok-free.dev
+paths:
+  /aegis/request:
+    post:
+      operationId: submitAegisRequest
+      summary: Submit a natural-language request for AEGIS to interpret and act on.
+      description: >
+        Takes a plain-English instruction (e.g. "create a bug ticket for the login
+        timeout"), runs it through the intent agent and risk classifier, and either
+        executes it immediately against Jira (low risk) or posts it to Slack for
+        human approval (high risk). Never claim the action executed unless the
+        response status is "auto_executed" or a later status check returns "executed".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+                  description: The natural-language request, e.g. "add a comment on AG-1 saying deployment is complete".
+      responses:
+        "200":
+          description: Request accepted and processed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [auto_executed, auto_execution_failed, pending_approval]
+                    description: >
+                      "auto_executed" means the action was low-risk and already ran against Jira.
+                      "pending_approval" means the action was high-risk and is waiting on a human
+                      in Slack — it has NOT happened yet. "auto_execution_failed" means it was
+                      low-risk but the Jira call itself failed.
+                  request_id:
+                    type: string
+                    description: Opaque id to poll with GET /aegis/status/{request_id}.
+                  detail:
+                    type: object
+                    description: Execution result (if auto_executed) or risk rationale (if pending_approval).
+  /aegis/status/{request_id}:
+    get:
+      operationId: getAegisRequestStatus
+      summary: Poll the status of a previously submitted request.
+      description: >
+        Use this to check whether a "pending_approval" request has since been
+        approved and executed, denied, or rejected. Poll this before telling the
+        user an action happened.
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The request_id returned by POST /aegis/request.
+      responses:
+        "200":
+          description: Current status of the request.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [pending_approval, executed, denied, rejected, failed]
+                  request_id:
+                    type: string
+                  detail:
+                    type: object
+                    description: The action proposal and outcome, once resolved.

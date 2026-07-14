@@ -7,3 +7,5 @@ python-dotenv
 slack_sdk
 pytest
 python-multipart
+streamlit
+requests

@@ -48,7 +48,7 @@ def issue_token(action_proposal: ActionProposal, risk_score: int) -> str:
     return f"{encoded_payload}.{signature}"
 
 
-def verify_token(token: str) -> ActionProposal:
+def _decode(token: str) -> dict:
     try:
         encoded_payload, signature = token.rsplit(".", 1)
         canonical = base64.urlsafe_b64decode(encoded_payload.encode()).decode()
@@ -62,6 +62,22 @@ def verify_token(token: str) -> ActionProposal:
 
     if time.time() > payload["expires_at"]:
         raise TokenError("Token expired")
+
+    return payload
+
+
+def peek(token: str) -> dict:
+    """Decode and validate a token's signature/expiry without consuming its nonce."""
+    payload = _decode(token)
+    return {
+        "nonce": payload["nonce"],
+        "action_proposal": ActionProposal.model_validate(payload["action_proposal"]),
+        "risk_score": payload["risk_score"],
+    }
+
+
+def verify_token(token: str) -> ActionProposal:
+    payload = _decode(token)
 
     conn = _get_conn()
     with conn:

@@ -47,6 +47,16 @@ def append_entry(payload: dict, result: str) -> int:
         return cursor.lastrowid
 
 
+def find_by_nonce(nonce: str) -> dict | None:
+    conn = _get_conn()
+    rows = conn.execute("SELECT result, payload_json FROM audit_log ORDER BY id ASC").fetchall()
+    for result, payload_json in rows:
+        payload = json.loads(payload_json)
+        if payload.get("nonce") == nonce:
+            return {"result": result, "payload": payload}
+    return None
+
+
 def verify_chain() -> bool:
     conn = _get_conn()
     rows = conn.execute(

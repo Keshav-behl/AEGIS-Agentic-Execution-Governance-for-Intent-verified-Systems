@@ -65,10 +65,14 @@ async def slack_interactions(
 
     if action_id == "aegis_deny":
         try:
+            nonce = signing.peek(token)["nonce"]
+        except signing.TokenError:
+            nonce = None
+        try:
             proposal = signing.verify_token(token)
-            record = {"action_proposal": proposal.model_dump()}
+            record = {"action_proposal": proposal.model_dump(), "nonce": nonce}
         except signing.TokenError as error:
-            record = {"token_error": str(error)}
+            record = {"token_error": str(error), "nonce": nonce}
         append_entry(record, "denied")
         _replace_with_outcome(f":no_entry: *Denied* by @{user}.")
         return {"status": "ok", "result": "denied"}

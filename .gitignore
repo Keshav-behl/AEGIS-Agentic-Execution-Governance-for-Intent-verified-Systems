@@ -8,3 +8,4 @@ data/*.db-journal
 .DS_Store
 *.egg-info/
 .pytest_cache/
+.claude/settings.local.json

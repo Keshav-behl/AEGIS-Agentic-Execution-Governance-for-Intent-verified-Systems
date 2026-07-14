@@ -44,12 +44,32 @@ def add_comment(issue_key: str, body: str) -> None:
     resp.raise_for_status()
 
 
+def _find_transition(transitions: list, transition_name: str) -> dict | None:
+    target = transition_name.lower()
+
+    for t in transitions:
+        if t["name"].lower() == target:
+            return t
+    for t in transitions:
+        name = t["name"].lower()
+        if target in name or name in target:
+            return t
+    for t in transitions:
+        if t["to"]["name"].lower() == target:
+            return t
+    for t in transitions:
+        if target in t["to"]["name"].lower():
+            return t
+
+    return None
+
+
 def transition_issue(issue_key: str, transition_name: str) -> None:
     resp = _client.get(f"/rest/api/3/issue/{issue_key}/transitions")
     resp.raise_for_status()
     transitions = resp.json()["transitions"]
 
-    match = next((t for t in transitions if t["name"].lower() == transition_name.lower()), None)
+    match = _find_transition(transitions, transition_name)
     if match is None:
         available = [t["name"] for t in transitions]
         raise ValueError(
