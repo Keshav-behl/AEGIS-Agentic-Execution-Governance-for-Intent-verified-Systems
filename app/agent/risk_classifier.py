@@ -18,14 +18,14 @@ DONE_LIKE_TRANSITIONS = {"done", "closed"}
 FORCE_APPROVAL_LABELS = {"compliance", "pci"}
 
 
-def _hard_rule_reason(proposal: ActionProposal) -> str | None:
+def _hard_rule_reason(proposal: ActionProposal) -> tuple[str, str] | None:
     if "delete" in proposal.action_type.lower():
-        return "hard rule: delete action"
+        return "delete", "hard rule: delete action"
     if any("delete" in str(value).lower() for value in proposal.fields.values()):
-        return "hard rule: delete action"
+        return "delete", "hard rule: delete action"
 
     if proposal.fields.get("bulk") or (proposal.target_issue and "," in proposal.target_issue):
-        return "hard rule: bulk action"
+        return "bulk", "hard rule: bulk action"
 
     if proposal.action_type == "transition_issue" and proposal.target_issue:
         transition_name = str(proposal.fields.get("transition_name", "")).lower()
@@ -34,19 +34,21 @@ def _hard_rule_reason(proposal: ActionProposal) -> str | None:
             labels = {label.lower() for label in issue["fields"].get("labels", [])}
             matched = labels & FORCE_APPROVAL_LABELS
             if matched:
-                return f"hard rule: transition to '{transition_name}' on issue labeled {sorted(matched)}"
+                return "compliance", f"hard rule: transition to '{transition_name}' on issue labeled {sorted(matched)}"
 
     return None
 
 
 def classify_risk(proposal: ActionProposal) -> RiskAssessment:
-    forced_reason = _hard_rule_reason(proposal)
-    if forced_reason:
+    forced = _hard_rule_reason(proposal)
+    if forced:
+        category, reason = forced
         return RiskAssessment(
             risk_score=100,
-            rationale=forced_reason,
+            rationale=reason,
             decision="needs_approval",
             forced=True,
+            category=category,
         )
 
     messages = [

@@ -16,3 +16,4 @@ class RiskAssessment(BaseModel):
     rationale: str
     decision: Literal["auto_approve", "needs_approval"]
     forced: bool = False
+    category: Literal["delete", "bulk", "compliance", "general"] = "general"

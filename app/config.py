@@ -62,3 +62,8 @@ DATABASE_PATH = _vars["DATABASE_PATH"]
 # Optional: map API keys to requester identities, e.g. {"nvapi-...": "alice@company.com"}.
 # Requests to /aegis/request must carry a known key in the X-AEGIS-API-Key header.
 AEGIS_API_KEYS: dict[str, str] = json.loads(os.getenv("AEGIS_API_KEYS", "{}"))
+
+# Optional: route approval requests to a different Slack channel by risk category
+# (delete/bulk/compliance/general). Falls back to SLACK_APPROVAL_CHANNEL for any
+# category with no entry, e.g. {"compliance": "#aegis-compliance"}.
+SLACK_ROUTING_CHANNELS: dict[str, str] = json.loads(os.getenv("SLACK_ROUTING_CHANNELS", "{}"))

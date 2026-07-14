@@ -18,6 +18,10 @@ def update_message(response_url: str, text: str, blocks: list) -> None:
     resp.raise_for_status()
 
 
+def _channel_for_category(category: str) -> str:
+    return config.SLACK_ROUTING_CHANNELS.get(category, config.SLACK_APPROVAL_CHANNEL)
+
+
 def post_approval_request(
     proposal: ActionProposal, risk: RiskAssessment, token: str, requester: str | None = None
 ) -> dict:
@@ -25,6 +29,7 @@ def post_approval_request(
         "*AEGIS approval needed*",
         f"*Requested by:* {requester or 'unknown (no API key)'}",
         f"*Action:* `{proposal.action_type}`" + (f" on `{proposal.target_issue}`" if proposal.target_issue else ""),
+        f"*Category:* {risk.category}",
         f"*Risk score:* {risk.risk_score}/100" + (" _(forced by hard rule)_" if risk.forced else ""),
         f"*Rationale:* {risk.rationale}",
         f"*Justification:* {proposal.justification}",
@@ -55,7 +60,7 @@ def post_approval_request(
     ]
 
     return _client.chat_postMessage(
-        channel=config.SLACK_APPROVAL_CHANNEL,
+        channel=_channel_for_category(risk.category),
         text=f"AEGIS approval needed: {proposal.action_type} (risk {risk.risk_score}/100)",
         blocks=blocks,
     )
