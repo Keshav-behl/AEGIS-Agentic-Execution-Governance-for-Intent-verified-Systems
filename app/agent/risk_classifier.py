@@ -29,7 +29,7 @@ def _hard_rule_reason(proposal: ActionProposal) -> str | None:
 
     if proposal.action_type == "transition_issue" and proposal.target_issue:
         transition_name = str(proposal.fields.get("transition_name", "")).lower()
-        if transition_name in DONE_LIKE_TRANSITIONS:
+        if any(done_like in transition_name for done_like in DONE_LIKE_TRANSITIONS):
             issue = get_issue(proposal.target_issue)
             labels = {label.lower() for label in issue["fields"].get("labels", [])}
             matched = labels & FORCE_APPROVAL_LABELS

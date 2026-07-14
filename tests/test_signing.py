@@ -48,7 +48,8 @@ def test_tampered_signature_rejected():
 def test_tampered_payload_rejected():
     token = signing.issue_token(_sample_proposal(), risk_score=10)
     encoded_payload, signature = token.rsplit(".", 1)
-    tampered = f"{encoded_payload}extra.{signature}"
+    flipped_char = "1" if encoded_payload[0] == "0" else "0"
+    tampered = f"{flipped_char}{encoded_payload[1:]}.{signature}"
 
     with pytest.raises(signing.TokenError):
         signing.verify_token(tampered)
